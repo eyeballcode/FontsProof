@@ -1,0 +1,14 @@
+{
+    "testing": {
+	    "smellycat": "localhost:8000",
+		"smellydog": "localhost:8001",
+		"fonts": "localhost:8002",
+		"mail": "localhost:8003"
+    },
+    "production": {
+	    "smellycat": "smellycat.yeung.online",
+		"smellydog": "smellydog.yeung.online",
+		"fonts": "fonts.yeung.online",
+		"mail": "mail.yeung.online"
+    }
+}
