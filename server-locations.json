@@ -1,14 +1,20 @@
 {
     "testing": {
-	    "smellycat": "localhost:8000",
-		"smellydog": "localhost:8001",
-		"fonts": "localhost:8002",
-		"mail": "localhost:8003"
+	"smellycat": "http://localhost:8000",
+	"smellydog": "http://localhost:8001",
+	"fonts": "http://localhost:8002",
+	"mail": "http://localhost:8003"
     },
     "production": {
-	    "smellycat": "smellycat.yeung.online",
-		"smellydog": "smellydog.yeung.online",
-		"fonts": "fonts.yeung.online",
-		"mail": "mail.yeung.online"
+	"smellycat": "http://smellycat.yeung.online",
+	"smellydog": "http://smellydog.yeung.online",
+	"fonts": "http://fonts.yeung.online",
+	"mail": "http://mail.yeung.online"
+    },
+    "files": {
+	"smellycat": "SmellyCat",
+	"smellydog": "SmellyDog",
+	"fonts": "Fonts",
+	"mail": "Mail"
     }
 }

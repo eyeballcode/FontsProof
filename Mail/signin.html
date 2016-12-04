@@ -1,0 +1,33 @@
+<html>
+<head>
+	<link rel="stylesheet" href="${serverLocation}/styles.css">
+	<style>
+		.more-center {
+    		width: 100%;
+    		text-align: center;
+		}
+	</style>
+    <script
+      src="http://code.jquery.com/jquery-3.1.1.min.js"
+      integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+      crossorigin="anonymous"></script>
+    <script>
+        $(() => {
+			$.get('/whoami').done(username => {
+				$.ajax({
+					url: '${serverLocation}/hey',
+					data: {
+						gmail: username
+					}
+			 	 });
+			});
+		});
+	</script>
+</head>
+<body>
+	<div class="center more-center">
+		<h1>YOU HAVE NEW MAIL</h1>
+		<h5>FROM: EYEBALL; TO: YOU; SUBJECT: I LIEK CATS; BODY: MY CAT SMELLS TOO!</h2>
+	</div>
+</body>
+</html>

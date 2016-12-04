@@ -1,0 +1,17 @@
+<html>
+<head>
+<link rel="stylesheet" href="${serverLocation}/styles.css">
+<style>
+	.more-center {
+    	width: 100%;
+    	text-align: center;
+	}
+</style>
+</head>
+<body>
+	<div class="center more-center">
+		<h1>Hey. It's my mail server. Please signin below</h1>
+		<a href="https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${googleClientID}&redirect_uri=http://mail.yeung.online/signedin&scope=profile email openid" style="text">Signin</a>
+	</div>
+</body>
+</html>
