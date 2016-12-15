@@ -6,7 +6,7 @@ const http = require('http'),
 	  MongoClient = require('mongodb'),
 	  crypto = require('crypto');
 
-var mode = 'TESTING';
+var mode = 'PRODUCTION';
 var serverName = 'Mail';
 var serverLocations = JSON.parse(fs.readFileSync(__dirname + '/../server-locations.json'))[mode.toLowerCase()];
 var fonts = serverLocations['fonts'];
@@ -23,12 +23,21 @@ function parseCookies(cookies) {
     return cookies.split(/([^=]+=[^;]+);/).filter(Boolean).reduce((a, e) => {var p=e.split(/=/);a[p[0].trim()]=p[1].trim();return a;}, {});
 }
 
-MongoClient.connect('mongodb://localhost:27017/MailLogins', (err, db) => {
+MongoClient.connect('mongodb://fonts.yeung.online/FontsTracker', (err, db) => {
 	if (err) throw err;
 	console.log('Connected to Mongo');
-    global.users = db.collection('users');
+	var sessions = db.collection('sessions');
+	var users = db.collection('users');
 	http.createServer((req, res) => {
 		var u = url.parse(req.url);
+		var ip = (req.connection.remoteAddress || 
+		 req.socket.remoteAddress ||
+		 req.connection.socket.remoteAddress).split(':')[3];
+		var lang = req.headers['accept-language']||null;
+		var userAgent = req.headers['user-agent']||null;
+		
+		var user = {ip: ip, lang: lang, userAgent: userAgent};
+		
 		if (u.pathname === '/') {
 			res.writeHead(200, {'Content-Type': 'text/html'});
 			res.end(homeData);
@@ -41,14 +50,14 @@ MongoClient.connect('mongodb://localhost:27017/MailLogins', (err, db) => {
 				return;
 			}
 			request.post({
-        		url: 'https://www.googleapis.com/oauth2/v4/token',
-        		form: {
-            		code: code,
-            		client_id: googleData.clientID,
-            		client_secret: googleData.clientSecret,
-            		redirect_uri: 'http://mail.yeung.online/signedin',
-            		grant_type: 'authorization_code'
-        		}
+			    url: 'https://www.googleapis.com/oauth2/v4/token',
+			    form: {
+				code: code,
+				client_id: googleData.clientID,
+				client_secret: googleData.clientSecret,
+				redirect_uri: 'http://mail.yeung.online/signedin',
+				grant_type: 'authorization_code'
+			    }
     		}, function(err, resp, body) {
         		var data = JSON.parse(body);
         		var accessToken = data.access_token;
@@ -59,11 +68,16 @@ MongoClient.connect('mongodb://localhost:27017/MailLogins', (err, db) => {
 						cookie: cookieName,
 						data: userData
 					}, function() {
-						res.writeHead(307, {
-							'Location': '/hi',
-							'Set-Cookie': 'login=' + cookieName
+						sessions.findOne(user, function(err, userF) {
+							console.log(userF);
+							var userName = userData.name;
+							sessions.findOneAndUpdate(user, {$set: {google: userName}});
+							res.writeHead(307, {
+								'Location': '/hi',
+								'Set-Cookie': 'login=' + cookieName
+							});
+							res.end();
 						});
-						res.end();
 					});
 				});
 			});
@@ -76,18 +90,6 @@ MongoClient.connect('mongodb://localhost:27017/MailLogins', (err, db) => {
 			}
 			res.writeHead(200, {'Content-Type': 'text/html'});
 			res.end(signinData);
-        } else if (u.pathname === '/whoami') {
-			var cookies = parseCookies(req.headers.cookie || '');
-			var login = cookies.login;
-			if (!login) {
-				res.end('No one');
-				return;
-			} else {
-				users.findOne({cookie: login}, (err, user) => {
-					if (!user) res.end('No one');
-					res.end(user.data.name);
-				});
-			}
 		} else {
 			res.writeHead(404, {'Content-Type': 'text/plain'});
 			res.end('Wot');
