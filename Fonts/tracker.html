@@ -9,9 +9,10 @@
 			$.ajax('/users').done(data => {
 				console.log(data);
 				for (var user of data) {
-					$('#data').append($('<div>').append($('<h4>').text(user.id)).append($('<ul>').attr('id', 'user-' + user.id)));
+					var userID = user.google ? user.google.replace(/[^\w]/g, '-') : user.ip.replace(/\./g, '');
+					$('#data').append($('<div>').append($('<h4>').text(user.google + ' @ ' + user.ip)).append($('<ul>').attr('id', 'user-' + userID)));
 					for (var site of user.sites) {
-						$('#user-' + user.id).append($('<ol>').text(site.host + site.page + ' @ ' + Date(site.time) + ' @ ' + user.gmail || ''));
+						$('#user-' + userID).append($('<ol>').text(site.referer + ' @ ' + new Date(site.time)));
 					}
 				}
 			});

@@ -1,88 +1,77 @@
-const http = require('http'),
-      fs = require('fs'),
-      MongoClient = require('mongodb'),
-      crypto = require('crypto'),
-      url = require('url'),
-	  qs = require('querystring');
+const   express = require('express'),
+        MongoClient = require('mongodb').MongoClient,
+		crypto = require('crypto'),
+		path = require('path'), 
+		cookieParser = require('cookie-parser'),
+		bodyParser = require('body-parser');
 
-var mode = 'TESTING';
-var serverName = 'Fonts';
-var serverLocations = JSON.parse(fs.readFileSync(__dirname + '/../server-locations.json'))[mode.toLowerCase()];
-var myServer = serverLocations[serverName.toLowerCase()].toLowerCase();
-var styleData = fs.readFileSync(__dirname + '/styles.css');
-var trackerData = fs.readFileSync(__dirname + '/tracker.html').toString().replace('${serverLocation}', myServer);
+global.app = require('express')();
 
-function genCookie() {
-    return crypto.randomBytes(32).toString('hex');
+var MONGO_SERVER_PATH = 'mongodb://localhost:27017/FontsTracker';
+
+function setupMongo(cb) {
+    var client = new MongoClient();
+    client.connect(MONGO_SERVER_PATH, function(err, db) {
+        if (err) {
+			throw err;	
+        }
+        global.mongo = {};
+        global.mongo.db = db;
+        cb();
+    });
 }
 
-function parseCookies(cookies) {
-    return cookies.split(/([^=]+=[^;]+);/).filter(Boolean).reduce((a, e) => {var p=e.split(/=/);a[p[0]]=p[1];return a;}, {});
-}
+setupMongo(function() {
+    app.use(express.static(path.join(__dirname, '../public')));
+	app.use(bodyParser.json());
+	app.use(bodyParser.urlencoded({
+		extended: false
+	}));
+	app.use(cookieParser());
+    mongo.sessions = mongo.db.collection('sessions');
 
-function getCookieHeader(req) {
-    var referer = url.parse(req.headers.referer || myServer + req.url); // Spelling??
-    var cookies = parseCookies(req.headers.cookie || '');  
-    var id = cookies.id;
-    var val = {};
+	app.use((req, res, next) => {console.log(req.url);next()});
 
-    if (!id) { // ID not set
-        id = genCookie();
-        val['Set-Cookie'] = 'id=' + id;
-	    console.log('New session with id ' + id);
-        ids.insert({
-            id: id,
-            sites: [],
-            google: null
-        });
-    }
-	if (referer.pathname !== '/evil-tracker' && referer.host !== myServer)
-    	ids.findOneAndUpdate({id: id}, {
-			$push: {
-				sites: {
-					host: referer.host,
-					page: referer.pathname,
-					time: +new Date()
-				}
+    app.get('/evil-tracker', function(req, res) {
+	    res.sendFile(path.join(__dirname, 'tracker.html'));
+    });
+	app.get('/styles.css', function(req, res) {
+		var ip = req.ip.split(':')[3];
+		var timing = +new Date();
+		var userAgent = req.headers['user-agent']||null;
+		var lang = req.headers['accept-language']||null;
+		var referer = req.headers['referer'] ||'fonts.yeung.online';
+		var user = {ip: ip, userAgent: userAgent, lang: lang};
+		mongo.sessions.findOne(user, function(err, userF) {
+			if (userF) {
+				console.log('Found match ' + ip + ' from ' + referer);
+			} else {
+				mongo.sessions.insert({
+					ip: ip, userAgent: userAgent, lang: lang, google: null
+				});
 			}
-    	});
-    return val;
-}
-
-MongoClient.connect('mongodb://localhost:27017/Fonts-Proof', (err, db) => {
-    if (err) throw err;
-    console.log('Connected to MongoDB');
-    global.ids = db.collection('ids');
-    http.createServer((req, res) => {
-		var header = getCookieHeader(req);
-		var u = url.parse(req.url);
-		if (u.pathname === '/styles.css') {
-			header['Content-Type'] = 'text/css';
-			res.writeHead(200, header);
-			res.end(styleData);
-		} else if (u.pathname === '/hey') {
-			var name = qs.parse(u.query).gmail;
-			var cookie = parseCookies(req.headers.cookie).id;
-			ids.findOne({id: cookie}, (err, user) => {
-				ids.findOneAndUpdate(user, {$set: {google: name}});
+			mongo.sessions.findOneAndUpdate(user, {$push: {
+				sites: {
+					referer: referer,
+					time: timing
+				}
+			}}, function() {
+				mongo.sessions.findOne(user, function(err, nuser) {
+					console.log(nuser);
+				});
 			});
-		} else if (u.pathname === '/evil-tracker') {
-			header['Content-Type'] = 'text/html';
-			res.writeHead(200, header);
-			res.end(trackerData);
-        } else if (u.pathname === '/users') {
-			var data = [];
-			header['Content-Type'] = 'application/json';
-			res.writeHead(200, header);
-			ids.find({}).forEach((user) => {
-				data.push(user);
-			}, () => {
-				res.end(JSON.stringify(data));
-			});
-		} else {
-			header['Content-Type'] = 'text/plain';
-			res.writeHead(404, header);
-			res.end('Wot');
-		}
-    }).listen(myServer.match(/\d+$/) ? myServer.match(/\d+$/)[0] : 80);
+		});
+		res.sendFile(path.join(__dirname, './styles.css'));
+	});
+	app.get('/users', function(req, res) {
+		var data = [];
+		mongo.sessions.find({}).forEach(user => {
+			data.push(user);
+		}, () => {
+			res.setHeader('Content-Type', 'application/json');
+			res.end(JSON.stringify(data));
+		});
+	});
 });
+
+require('http').createServer(app).listen(80);
