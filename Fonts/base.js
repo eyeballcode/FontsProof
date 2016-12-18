@@ -1,6 +1,7 @@
 const http = require('http'),
 MongoClient = require('mongodb'),
 url = require('url'),
+querystring = require('querystring'),
 util = require('./util');
 
 var routes = {
@@ -8,15 +9,17 @@ var routes = {
     '/styles.css': require('./routes/styles')
 }
 
-var port;
-if (true) port = 8002; else port = 80;
+var port, linkingPort;
+if (true) linkingPort = 8003, port = linkingPort - 1; else linkingPort = 81, port = linkingPort - 1;
 
 MongoClient.connect('mongodb://localhost:27017/Fonts-Proof', (err, db) => {
     if (err) throw err;
     global.mongo = {};
     mongo.ids = db.collection('ids');
+    mongo.signins = db.collection('signins');
     mongo.db = db;
-    createServer();
+    createMainServer();
+    createLinkingServer();
 });
 
 function setupUtils(req) {
@@ -27,9 +30,11 @@ function setupUtils(req) {
     }
 
     req.cookies = req.hasCookies() ? util.parseCookies(req.headers['cookie']) : {};
+
+    req.query = querystring.parse(req.url.query || '');
 }
 
-function createServer() {
+function createMainServer() {
     http.createServer((req, res) => {
         setupUtils(req);
         var path = req.url.pathname;
@@ -40,4 +45,14 @@ function createServer() {
             res.end('Not Found');
         }
     }).listen(port);
+}
+
+function createLinkingServer() {
+    http.createServer((req, res) => {
+        util.processPost(req, res, (data) => {
+            if (data.type = 'user-signup') {
+                util.handleSignin(data);
+            }
+        });
+    }).listen(linkingPort);
 }

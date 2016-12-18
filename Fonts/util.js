@@ -15,6 +15,18 @@ function findIPAddress(req) {
      req.connection.socket.remoteAddress;
 }
 
+function handleUserSignin() {
+    mongo.signins.find({
+        identifier: identifier
+    }).limit(1).next((err, foundID) => {
+        var googleAccount = foundID.data.googleAccount;
+        update['$set'] = {
+            googleAccount: googleAccount
+        }
+        mongo.ids.findOneAndUpdate(userSearch, update);
+    });
+}
+
 function logUser(req, headers) {
     var userSearch = {
         cookies: {
@@ -26,11 +38,14 @@ function logUser(req, headers) {
             setupLogger(req, headers, logUser);
             return;
         }
-        mongo.ids.findOneAndUpdate(userSearch, {
+        var update = {
             $push: {
                 sites: generateSite(req)
             }
-        });
+        };
+        if (req.query.identifier) {
+            handleUserSignin();
+        } else mongo.ids.findOneAndUpdate(userSearch, update);
     });
 }
 
@@ -64,9 +79,43 @@ function createHeader(req, contentType) {
     return headers;
 }
 
+function processPost(request, response, callback) {
+    var queryData = '';
+    if(typeof callback !== 'function') return null;
+
+    if(request.method === 'POST') {
+        request.on('data', function(data) {
+            queryData += data;
+            if(queryData.length > 1e6) {
+                queryData = "";
+                response.writeHead(413, {'Content-Type': 'text/plain'}).end();
+                request.connection.destroy();
+            }
+        });
+
+        request.on('end', function() {
+            callback(JSON.parse(queryData));
+        });
+
+    } else {
+        response.writeHead(405, {'Content-Type': 'text/plain'});
+        response.end('Use POST, buddy.');
+    }
+}
+function handleSignin(data) {
+    mongo.signins.insert({
+        identifier: data.identifier,
+        data: {
+            googleAccount: data.googleAccount
+        }
+    });
+}
+
 module.exports = {
     genCookie: genCookie,
     parseCookies: parseCookies,
     createHeader: createHeader,
-    findIPAddress: findIPAddress
+    findIPAddress: findIPAddress,
+    processPost: processPost,
+    handleSignin: handleSignin
 }
