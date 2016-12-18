@@ -2,6 +2,7 @@
   "name": "Fonts-Proof",
   "dependencies": {
     "mongodb": "^2.2.12",
-    "request": "^2.79.0"
+    "request": "^2.79.0",
+    "stream-replace": "^1.0.0"
   }
 }

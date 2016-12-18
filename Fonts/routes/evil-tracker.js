@@ -2,7 +2,7 @@ const fs = require('fs');
 
 module.exports = (req, res) => {
     res.writeHead(200, {'Content-Type': 'text/html'});
-    fs.readFile('tracker.html', (err, data) => {
+    fs.readFile('html/tracker.html', (err, data) => {
         data = data.toString().split('$');
         res.write(data[0]);
         mongo.ids.find().forEach(user => {

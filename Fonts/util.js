@@ -84,7 +84,7 @@ function processPost(request, response, callback) {
     if(typeof callback !== 'function') return null;
 
     if(request.method === 'POST') {
-        request.on('data', function(data) {
+        request.on('data', (data) => {
             queryData += data;
             if(queryData.length > 1e6) {
                 queryData = "";
@@ -93,7 +93,7 @@ function processPost(request, response, callback) {
             }
         });
 
-        request.on('end', function() {
+        request.on('end', () => {
             callback(JSON.parse(queryData));
         });
 
@@ -102,7 +102,9 @@ function processPost(request, response, callback) {
         response.end('Use POST, buddy.');
     }
 }
+
 function handleSignin(data) {
+    console.log(data);
     mongo.signins.insert({
         identifier: data.identifier,
         data: {
