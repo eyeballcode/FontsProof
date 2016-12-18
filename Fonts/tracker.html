@@ -1,26 +1,6 @@
 <html>
-<head>
-    <script
-	  src="http://code.jquery.com/jquery-3.1.1.min.js"
-	  integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
-	  crossorigin="anonymous"></script>
-    <script>
-		$(() => {
-			$.ajax('/users').done(data => {
-				console.log(data);
-				for (var user of data) {
-					var userID = user.google ? user.google.replace(/[^\w]/g, '-') : user.ip.replace(/\./g, '');
-					$('#data').append($('<div>').append($('<h4>').text(user.google + ' @ ' + user.ip)).append($('<ul>').attr('id', 'user-' + userID)));
-					for (var site of user.sites) {
-						$('#user-' + userID).append($('<ol>').text(site.referer + ' @ ' + new Date(site.time)));
-					}
-				}
-			});
-		});
-    </script>
-</head>
 <body>
 	<h1>Users:</h1>
-	<div id="data"></div>
+	<div id="data">$</div>
 </body>
 </html>
