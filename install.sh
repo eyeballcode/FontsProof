@@ -13,3 +13,22 @@ curl --silent --location https://rpm.nodesource.com/setup_7.x | sudo bash -
 
 sudo yum -y install nodejs
 
+echo -n "Enter the server name: "
+read SERVER
+
+echo "description "TFH"
+author      "Eyeball"
+
+start on started mountall
+stop on shutdown
+
+respawn
+respawn limit 100 5
+
+script
+  cd /home/ec2-user/FontsProof/$SERVER
+  sudo node base.js
+end script" | 
+    sudo tee -a /etc/init/$SERVER.conf
+
+sudo start $SERVER
