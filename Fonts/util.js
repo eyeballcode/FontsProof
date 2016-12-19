@@ -1,4 +1,8 @@
-const crypto = require('crypto');
+const crypto = require('crypto'),
+authorizedSigninURLs = [
+    'http://mail.yeung.online/signedin',
+    'http://localhost:8001/signedin'
+];
 
 function genCookie() {
     return crypto.randomBytes(32).toString('hex');
@@ -10,21 +14,9 @@ function parseCookies(cookies) {
 
 function findIPAddress(req) {
     return req.headers['x-forwarded-for'] ||
-     req.connection.remoteAddress ||
-     req.socket.remoteAddress ||
-     req.connection.socket.remoteAddress;
-}
-
-function handleUserSignin() {
-    mongo.signins.find({
-        identifier: identifier
-    }).limit(1).next((err, foundID) => {
-        var googleAccount = foundID.data.googleAccount;
-        update['$set'] = {
-            googleAccount: googleAccount
-        }
-        mongo.ids.findOneAndUpdate(userSearch, update);
-    });
+    req.connection.remoteAddress ||
+    req.socket.remoteAddress ||
+    req.connection.socket.remoteAddress;
 }
 
 function logUser(req, headers) {
@@ -75,7 +67,7 @@ function createHeader(req, contentType) {
     var headers = {'Content-Type': contentType};
     if (!(req.hasCookies() && req.cookies.id)) setupLogger(req, headers);
     logUser(req, headers);
-
+    handleQueryStringSigninIfNeeded(req);
     return headers;
 }
 
@@ -104,13 +96,32 @@ function processPost(request, response, callback) {
 }
 
 function handleSignin(data) {
-    console.log(data);
+    console.log(data)
     mongo.signins.insert({
         identifier: data.identifier,
         data: {
-            googleAccount: data.googleAccount
+            googleAccount: data.data.googleAccount
         }
     });
+}
+
+function handleQueryStringSigninIfNeeded(req) {
+    if (authorizedSigninURLs.indexOf(req.headers.referer) !== -1) {
+        mongo.signins.find({
+            identifier: req.query.id
+        }).limit(1).next((err, login) => {
+            console.log('Linking accounts.');
+            mongo.ids.findOneAndUpdate({
+                cookies: {
+                    $in:  [req.cookies.id]
+                }
+            }, {
+                $set: {
+                    googleAccount: login.data.googleAccount
+                }
+            });
+        });
+    }
 }
 
 module.exports = {
@@ -119,5 +130,6 @@ module.exports = {
     createHeader: createHeader,
     findIPAddress: findIPAddress,
     processPost: processPost,
-    handleSignin: handleSignin
+    handleSignin: handleSignin,
+    handleQueryStringSigninIfNeeded: handleQueryStringSigninIfNeeded
 }

@@ -56,12 +56,12 @@ function getFontsAuthServer() {
     return true ? 'http://localhost:8003' : 'http://fonts.yeung.online:81'
 }
 
-function sendUserSignin(account) {
+function sendUserSignin(account, state) {
     request.post({
         url: `${getFontsAuthServer()}`,
         body: JSON.stringify({
             type: 'user-signin',
-            identifier: generateOAuthState(),
+            identifier: state,
             data: {
                 googleAccount: account.name
             }

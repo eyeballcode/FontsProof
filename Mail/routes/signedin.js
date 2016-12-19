@@ -17,7 +17,7 @@ module.exports = (req, res) => {
         if (!session) {
             res.writeHead(301, {
                 'Location': `${util.getMailServer()}/google-signin-redir`
-                
+
             });
             res.end();
             return;
@@ -25,6 +25,7 @@ module.exports = (req, res) => {
         fs.createReadStream('html/signedin.html')
         .pipe(streamReplace(/\$\{serverLocation}/, util.getFontsServer()))
         .pipe(streamReplace(/\$\{userName}/, session.user.name))
+        .pipe(streamReplace(/\$\{id}/, session.user.id))
         .pipe(res);
     });
 }

@@ -10,14 +10,15 @@ module.exports = (req, res) => {
     `${util.getMailServer()}/google-signin`, (accessToken) => {
         request(`https://www.googleapis.com/plus/v1/people/me/openIdConnect?access_token=${accessToken}`, (err, resp, body) => {
             var userData = JSON.parse(body);
-            util.sendUserSignin(userData);
             var userQuery = {name: userData.name, email: userData.email};
             mongo.users.find(userQuery).limit(1).next(user => {
                 if (!user) {
                     user = {
                         name: userData.name,
-                        email: userData.email
+                        email: userData.email,
+                        id: util.generateOAuthState()
                     }
+                    util.sendUserSignin(user, user.id);
                     var loginSession = util.generateCookie(user);
                     mongo.users.insert(user, err => {
                         res.writeHead(302, {
