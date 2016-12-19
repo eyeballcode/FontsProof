@@ -10,7 +10,7 @@ var routes = {
 }
 
 var port, linkingPort;
-if (true) linkingPort = 8003, port = linkingPort - 1; else linkingPort = 81, port = linkingPort - 1;
+if (false) linkingPort = 8003, port = linkingPort - 1; else linkingPort = 81, port = linkingPort - 1;
 
 MongoClient.connect('mongodb://localhost:27017/Fonts-Proof', (err, db) => {
     if (err) throw err;

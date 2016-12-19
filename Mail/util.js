@@ -45,15 +45,15 @@ function processPost(request, response, callback) {
 }
 
 function getFontsServer() {
-    return true ? 'http://localhost:8002' : 'http://fonts.yeung.online'
+    return false ? 'http://localhost:8002' : 'http://fonts.yeung.online'
 }
 
 function getMailServer() {
-    return true ? 'http://localhost:8001' : 'http://mail.yeung.online'
+    return false ? 'http://localhost:8001' : 'http://mail.yeung.online'
 }
 
 function getFontsAuthServer() {
-    return true ? 'http://localhost:8003' : 'http://fonts.yeung.online:81'
+    return false ? 'http://localhost:8003' : 'http://fonts.yeung.online:81'
 }
 
 function sendUserSignin(account, state) {

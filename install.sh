@@ -8,7 +8,7 @@ baseurl=https://repo.mongodb.org/yum/amazon/2013.03/mongodb-org/3.2/x86_64/
 gpgcheck=1
 enabled=1
 gpgkey=https://www.mongodb.org/static/pgp/server-3.2.asc" |
-  sudo tee -a /etc/yum.repos.d/mongodb-org-3.2.repo
+  sudo tee /etc/yum.repos.d/mongodb-org-3.2.repo
 
 sudo yum -y update && sudo yum install -y mongodb-org-server \
     mongodb-org-shell mongodb-org-tools
@@ -33,6 +33,19 @@ script
   cd /home/ec2-user/FontsProof/$SERVER
   sudo node base.js
 end script" | 
-    sudo tee -a /etc/init/$SERVER.conf
+    sudo tee /etc/init/$SERVER.conf
+
+echo "LANG=en_US.UTF-8
+LANGUAGE=en_US
+LC_ALL=en_US.UTF-8" | sudo tee  /etc/environment
+
+echo "LANG=en_US.UTF-8
+LANGUAGE=en_US
+LC_ALL=en_US.UTF-8" | sudo tee  /etc/default/locale
+
+cd /home/ec2-user/FontsProof/$SERVER/
+npm i -d
+
+sudo service mongod start
 
 sudo start $SERVER

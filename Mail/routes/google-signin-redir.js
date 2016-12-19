@@ -3,7 +3,7 @@ util = require('../util'),
 fs = require('fs'),
 googleData = JSON.parse(fs.readFileSync('google-data.json'));
 
-const serverLocation = true ? 'http://localhost:8001' : 'http://mail.yeung.online'
+const serverLocation = false ? 'http://localhost:8001' : 'http://mail.yeung.online'
 
 module.exports = (req, res) => {
     var state = util.generateOAuthState();

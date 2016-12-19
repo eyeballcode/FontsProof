@@ -60,7 +60,7 @@ function setupLogger(req, headers, callback) {
         sites: [
             generateSite(req)
         ]
-    }, callback || ()=>{});
+    }, callback || (()=>{}));
 }
 
 function createHeader(req, contentType) {
